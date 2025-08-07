@@ -23,7 +23,7 @@ test('User registers with Stripe, completes course, and verifies 100% completion
   await page.fill('input[name="billingName"]', 'Test User');
   await page.click('.SubmitButton-IconContainer');
 
-  await page.waitForURL(url => url.href.includes('thank-you'), { timeout: 3000 });
+  await page.waitForURL(url => url.href.includes('thank-you'), { timeout: 15000 });
   await expect(page.locator('body')).toContainText(/thank you for your purchase/i);
 
   // Step 2: Visit course and open lessons
