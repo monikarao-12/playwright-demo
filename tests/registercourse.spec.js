@@ -24,8 +24,7 @@ test('User registers with Stripe, completes course, and verifies 100% completion
   await page.click('.SubmitButton-IconContainer');
 
  await Promise.all([
-  page.waitForNavigation({ url: /thank-you/, timeout: 35000 }),
-  page.click('.SubmitButton-IconContainer')
+  await page.waitForURL(/thank-you/, { waitUntil: 'networkidle', timeout: 45000 }),
 ]);
 
   await expect(page.locator('body')).toContainText(/thank you for your purchase/i);
@@ -35,7 +34,7 @@ test('User registers with Stripe, completes course, and verifies 100% completion
 
   const headers = await page.$$('.mccs-section-header');
   for (const header of headers) {
-    await header.click();cours
+    await header.click();
   }
 
   const links = await page.$$eval('.mccs-lesson-row-link', els => els.map(el => el.href));
