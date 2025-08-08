@@ -1,9 +1,9 @@
 const { test, expect } = require('@playwright/test');
 
 test('User registers with Stripe, completes course, and verifies 100% completion', async ({ page }) => {
-  test.setTimeout(2 * 60 * 1000); // 2 minutes
+  test.setTimeout(2 * 60 * 1000); // Set timeout to 2 minutes
 
-  // Step 1: Register user with Stripe
+  // Step 1: Register user with Stripe Elements
   await page.goto('https://cypress.apps.cspf.co/register/basic-membership/');
 
   const timestamp = Date.now();
@@ -23,12 +23,13 @@ test('User registers with Stripe, completes course, and verifies 100% completion
   await page.fill('input[name="billingName"]', 'Test User');
   await page.fill('input[name="billingPostalCode"]', '20588');
   await page.click('.SubmitButton-IconContainer');
- await Promise.all([
-  await page.waitForURL(/thank-you/, { waitUntil: 'networkidle', timeout: 45000 }),
-]);
 
+  // Wait for thank-you page after payment
+  await Promise.all([
+    page.waitForURL(/thank-you/, { waitUntil: 'networkidle', timeout: 45000 }),
+  ]);
 
-  // Step 2: Visit course and open lessons
+  // Step 2: Visit course page and open all lesson sections
   await page.goto('https://cypress.apps.cspf.co/courses/introduction-to-coffee-brewing/');
 
   const headers = await page.$$('.mccs-section-header');
@@ -36,6 +37,7 @@ test('User registers with Stripe, completes course, and verifies 100% completion
     await header.click();
   }
 
+  // Collect all lesson/quiz links
   const links = await page.$$eval('.mccs-lesson-row-link', els => els.map(el => el.href));
   console.log(`🧭 Found ${links.length} lessons/quizzes`);
 
@@ -49,18 +51,18 @@ test('User registers with Stripe, completes course, and verifies 100% completion
     await page.goto(href, { timeout: 10000, waitUntil: 'load' });
     await page.waitForTimeout(1500);
 
+    // Check if lesson contains a quiz
     const isQuiz = await page.$('fieldset.mccs-quiz-question');
     if (isQuiz) {
       console.log(`📝 Detected quiz on lesson ${count}`);
+
       const optionLabel = page.locator('.mccs-quiz-question-option-label', { hasText: 'French Press' });
       const radioInput = optionLabel.locator('xpath=preceding-sibling::input[@type="radio"]');
       await radioInput.first().check({ force: true });
       await page.locator('#mccs-quiz-submit-bottom').click({ force: true });
-
-      //await page.waitForSelector('.mccs-quiz-results, .mccs-quiz-completed', { timeout: 10000 });
-      //await page.waitForTimeout(1000);
     }
 
+    // Click "Complete and Continue" if available
     const nextBtn = page.locator('text=Complete and Continue');
     if (await nextBtn.count()) {
       console.log(`✅ Clicking 'Complete and Continue' on lesson ${count}`);
@@ -70,11 +72,14 @@ test('User registers with Stripe, completes course, and verifies 100% completion
       ]);
     }
   }
-await page.reload(); // or page.goto(page.url())
+
+  // Reload the course page to update progress
+  await page.reload();
 
   await page.goto('https://cypress.apps.cspf.co/courses/introduction-to-coffee-brewing/', { waitUntil: 'load' });
   await page.waitForTimeout(2000);
 
+  // Verify course progress shows 100% completion
   const progressText = await page.locator('.progress-text').innerText();
   expect(progressText).toMatch(/100%|Complete/i);
 });
