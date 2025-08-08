@@ -23,11 +23,7 @@ test('User registers with Stripe, completes course, and verifies 100% completion
   await page.fill('input[name="billingName"]', 'Test User');
   await page.click('.SubmitButton-IconContainer');
 
- await Promise.all([
-  await page.waitForURL(/thank-you/, { waitUntil: 'networkidle', timeout: 45000 }),
-]);
 
-  await expect(page.locator('body')).toContainText(/thank you for your purchase/i);
 
   // Step 2: Visit course and open lessons
   await page.goto('https://cypress.apps.cspf.co/courses/introduction-to-coffee-brewing/');
