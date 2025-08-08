@@ -21,8 +21,11 @@ test('User registers with Stripe, completes course, and verifies 100% completion
   await page.fill('input[name="cardExpiry"]', '12/34');
   await page.fill('input[name="cardCvc"]', '123');
   await page.fill('input[name="billingName"]', 'Test User');
+  await page.fill('input[name="billingPostalCode"]', '20588');
   await page.click('.SubmitButton-IconContainer');
-
+ await Promise.all([
+  await page.waitForURL(/thank-you/, { waitUntil: 'networkidle', timeout: 45000 }),
+]);
 
 
   // Step 2: Visit course and open lessons
